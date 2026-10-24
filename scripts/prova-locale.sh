@@ -7,11 +7,18 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 echo "== GPverse CRM · prova locale in $(pwd)"
 
-if ! python3 -m venv --help >/dev/null 2>&1; then
+# su Debian/Mint "venv" esiste anche senza il pacchetto python3-venv, ma poi fallisce: controllo ensurepip
+if ! python3 -c "import ensurepip" >/dev/null 2>&1; then
+  PYV=$(python3 -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")')
   echo "== Installo python3-venv (serve la password di sudo)"
-  sudo apt-get update -qq && sudo apt-get install -y python3-venv
+  sudo apt-get update -qq && sudo apt-get install -y python3-venv "python${PYV}-venv"
 fi
 
+# un .venv creato a metà da un tentativo precedente va rifatto
+if [ -d .venv ] && [ ! -f .venv/bin/activate ]; then
+  echo "== Rimuovo un ambiente .venv incompleto"
+  rm -rf .venv
+fi
 if [ ! -d .venv ]; then
   echo "== Creo l'ambiente Python (.venv)"
   python3 -m venv .venv
