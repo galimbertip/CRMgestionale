@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Apri una richiesta{% endblock %}
+{% block content %}
+<div class="hero">
+  <section>
+    <h1>Come possiamo aiutarti?</h1>
+    <p class="muted">Descrivi il problema: la richiesta arriva subito al reparto assistenza e ricevi via email un link per seguirla.</p>
+    <form method="post" enctype="multipart/form-data" class="card" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<ul class="flash"><li class="error">{{ form.non_field_errors|join:" " }}</li></ul>{% endif %}
+      {% if not portale %}
+        <div class="row2">{% include "includes/field.html" with field=form.nome %}{% include "includes/field.html" with field=form.azienda %}</div>
+        <div class="row2">{% include "includes/field.html" with field=form.email %}{% include "includes/field.html" with field=form.telefono %}</div>
+      {% else %}
+        {% for f in form.hidden_fields %}{{ f }}{% endfor %}
+        <p class="muted small">Richiesta a nome di <b>{{ user.get_full_name|default:user.username }}</b>{% if user.cliente %} · {{ user.cliente }}{% endif %}</p>
+        {% include "includes/field.html" with field=form.telefono %}
+      {% endif %}
+      <div class="row2">{% include "includes/field.html" with field=form.categoria %}{% include "includes/field.html" with field=form.priorita %}</div>
+      {% include "includes/field.html" with field=form.matricola %}
+      {% include "includes/field.html" with field=form.oggetto %}
+      {% include "includes/field.html" with field=form.descrizione %}
+      {% include "includes/field.html" with field=form.allegato %}
+      {% if not portale %}{% include "includes/field.html" with field=form.privacy %}{% endif %}
+      <div class="hp" aria-hidden="true">{{ form.sito_web }}</div>
+      <button class="btn" type="submit">Invia richiesta →</button>
+    </form>
+  </section>
+  <aside>
+    <div class="card">
+      <h2>Come funziona</h2>
+      <ol class="steps">
+        <li><b>Invii la richiesta</b>Ricevi subito un codice ticket e un link personale.</li>
+        <li><b>La prendiamo in carico</b>Entro i tempi previsti dal tuo contratto di assistenza.</li>
+        <li><b>Segui e rispondi</b>Dal link vedi lo stato, i messaggi del tecnico e puoi rispondere.</li>
+      </ol>
+    </div>
+    <div class="card">
+      {% if user.is_authenticated %}
+        <h2>Le tue richieste</h2>
+        <p class="muted">Lo storico dei ticket della tua azienda è sempre disponibile.</p>
+        <a class="btn ghost" href="{% url 'portale:miei_ticket' %}">Vai ai miei ticket</a>
+      {% else %}
+        <h2>Sei già cliente?</h2>
+        <p class="muted">Accedi per ritrovare lo storico dei ticket della tua azienda senza cercare le email.</p>
+        <a class="btn ghost" href="{% url 'login' %}">Accedi</a>
+        <p class="small muted" style="margin-top:12px">Hai perso il link di un ticket? <a href="{% url 'portale:cerca_ticket' %}">Ritrovalo</a></p>
+      {% endif %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

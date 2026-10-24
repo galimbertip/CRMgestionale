@@ -1,0 +1,21 @@
+{% extends "campo/stampa_base.html" %}
+{% block body %}
+<h2>Dati sopralluogo</h2>
+<table class="kv">
+  <tr><td>Cliente</td><td>{{ obj.cliente }}</td></tr>
+  <tr><td>Commessa</td><td>{{ obj.commessa }}</td></tr>
+  {% if obj.sede %}<tr><td>Sede</td><td>{{ obj.sede.nome }} – {{ obj.sede.indirizzo }}, {{ obj.sede.citta }}</td></tr>{% endif %}
+  {% if obj.referente_presente %}<tr><td>Referente presente</td><td>{{ obj.referente_presente }}</td></tr>{% endif %}
+</table>
+{% include "campo/_checklist.html" %}
+<h2>Esito di fattibilità</h2>
+<p class="{% if obj.esito == 'fattibile' %}esito-ok{% elif obj.esito == 'non_fattibile' %}esito-ko{% endif %}" style="font-size:12pt"><b>{{ obj.get_esito_display }}</b></p>
+{% if obj.opere_preliminari %}<h2>Opere preliminari a carico del cliente</h2><div class="box">{{ obj.opere_preliminari }}</div>{% endif %}
+{% if obj.note %}<h2>Note</h2><div class="box">{{ obj.note }}</div>{% endif %}
+{% with foto=obj.foto.all %}{% if foto %}
+<h2>Documentazione fotografica</h2>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+  {% for f in foto %}<figure style="margin:0"><img src="{{ f.immagine.url }}" style="width:100%;height:120px;object-fit:cover"><figcaption style="font-size:8pt">{{ f.didascalia }}</figcaption></figure>{% endfor %}
+</div>
+{% endif %}{% endwith %}
+{% endblock %}

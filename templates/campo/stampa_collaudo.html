@@ -1,0 +1,21 @@
+{% extends "campo/stampa_base.html" %}
+{% block body %}
+<h2>Dati collaudo</h2>
+<table class="kv">
+  <tr><td>Cliente</td><td>{{ obj.cliente }}</td></tr>
+  <tr><td>Commessa</td><td>{{ obj.commessa }}</td></tr>
+  {% if obj.sede %}<tr><td>Sede</td><td>{{ obj.sede.nome }} – {{ obj.sede.indirizzo }}, {{ obj.sede.citta }}</td></tr>{% endif %}
+</table>
+{% with apparati=obj.apparati.all %}{% if apparati %}
+<h2>Apparati collaudati</h2>
+<table><tr><th>Modello</th><th>Matricola</th><th>Firmware</th><th>Ubicazione</th></tr>
+  {% for a in apparati %}<tr><td>{{ a.modello }}</td><td>{{ a.matricola }}</td><td>{{ a.versione_firmware }}</td><td>{{ a.ubicazione }}</td></tr>{% endfor %}
+</table>
+{% endif %}{% endwith %}
+{% include "campo/_checklist.html" %}
+<h2>Esito</h2>
+<p class="{% if obj.esito == 'superato' %}esito-ok{% elif obj.esito == 'non_superato' %}esito-ko{% endif %}" style="font-size:12pt"><b>{{ obj.get_esito_display }}</b></p>
+{% if obj.riserve %}<h2>Riserve</h2><div class="box">{{ obj.riserve }}</div>{% endif %}
+{% if obj.note %}<h2>Note</h2><div class="box">{{ obj.note }}</div>{% endif %}
+<p style="font-size:9pt;color:#444;margin-top:14px">Con la firma il cliente dichiara di aver assistito al collaudo e di prendere in consegna gli apparati sopra elencati{% if obj.esito == 'con_riserva' %}, con le riserve indicate{% endif %}.</p>
+{% endblock %}

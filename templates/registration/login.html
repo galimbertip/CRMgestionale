@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Accedi{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div class="card" style="max-width:420px;margin:30px auto">
+  <h1>Accedi</h1>
+  <p class="muted small">Clienti: storico ticket della vostra azienda. Tecnici: cruscotto e back-office.</p>
+  <form method="post">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<ul class="flash"><li class="error">Credenziali non valide.</li></ul>{% endif %}
+    <div class="field"><label for="id_username">Utente o email</label>{{ form.username }}</div>
+    <div class="field"><label for="id_password">Password</label>{{ form.password }}</div>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="btn" style="width:100%;justify-content:center">Entra</button>
+  </form>
+  <p class="small" style="margin-top:14px"><a href="{% url 'password_reset' %}">Password dimenticata o primo accesso?</a></p>
+</div>
+{% endblock %}

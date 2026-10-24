@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load gp %}
+{% block title %}I miei ticket{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+  <div>
+    <h1>Storico richieste</h1>
+    <p class="muted" style="margin:0">{% if user.cliente %}{{ user.cliente }}{% else %}{{ user.email }}{% endif %}</p>
+  </div>
+  <a class="btn" href="{% url 'portale:apri_ticket' %}">+ Nuova richiesta</a>
+</div>
+
+<form method="get" class="card" style="padding:14px">
+  <div class="tabs">
+    <a href="?filtro=aperti" class="{% if filtro == 'aperti' %}on{% endif %}">Aperti</a>
+    <a href="?filtro=chiusi" class="{% if filtro == 'chiusi' %}on{% endif %}">Chiusi</a>
+    <a href="?filtro=tutti" class="{% if filtro == 'tutti' %}on{% endif %}">Tutti</a>
+  </div>
+  <input type="hidden" name="filtro" value="{{ filtro }}">
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <input type="search" name="q" value="{{ q }}" placeholder="Cerca per codice, oggetto, matricola" style="flex:1;min-width:220px">
+    {% if user.cliente %}<label class="small"><input type="checkbox" name="solo_miei" value="1" {% if solo_miei %}checked{% endif %}> solo aperti da me</label>{% endif %}
+    <button class="btn small ghost">Filtra</button>
+  </div>
+</form>
+
+<div class="card" style="margin-top:16px;overflow-x:auto">
+  <table class="table">
+    <thead><tr><th>Codice</th><th>Oggetto</th><th>Stato</th><th>Tempi</th><th>Aperto</th></tr></thead>
+    <tbody>
+    {% for t in tickets %}
+      <tr>
+        <td><a class="code" href="{{ t.get_absolute_url }}">{{ t.codice }}</a></td>
+        <td><a href="{{ t.get_absolute_url }}" style="color:var(--text)">{{ t.oggetto }}</a>
+          <div class="small muted">{{ t.richiedente_nome }}{% if t.apparato %} · {{ t.apparato.matricola }}{% endif %}</div></td>
+        <td><span class="pill {{ t.stato }}">{{ t.get_stato_display }}</span></td>
+        <td>{% sla_badge t %}</td>
+        <td class="small muted">{{ t.creato_il|date:"d/m/Y" }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" class="muted">Nessun ticket in questa vista.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if apparati %}
+<div class="card">
+  <h2>I vostri apparati</h2>
+  <table class="table small">
+    <thead><tr><th>Matricola</th><th>Modello</th><th>Sede</th><th>Stato</th></tr></thead>
+    <tbody>{% for a in apparati %}<tr><td class="code">{{ a.matricola }}</td><td>{{ a.modello }}</td><td>{{ a.sede.nome|default:"—" }}</td><td>{{ a.get_stato_display }}</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

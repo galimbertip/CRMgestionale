@@ -1,0 +1,34 @@
+{% extends "campo/stampa_base.html" %}
+{% block body %}
+<h2>Cliente e intervento</h2>
+<table class="kv">
+  <tr><td>Cliente</td><td>{{ obj.cliente }}{% if obj.sede %} – {{ obj.sede.nome }}, {{ obj.sede.indirizzo }} {{ obj.sede.citta }}{% endif %}</td></tr>
+  {% if obj.apparato %}<tr><td>Apparato</td><td>{{ obj.apparato.modello }} · matricola {{ obj.apparato.matricola }}</td></tr>{% endif %}
+  {% if obj.ticket %}<tr><td>Ticket</td><td>{{ obj.ticket.codice }} – {{ obj.ticket.oggetto }}</td></tr>{% endif %}
+  {% if obj.commessa %}<tr><td>Commessa</td><td>{{ obj.commessa }}</td></tr>{% endif %}
+  {% if obj.contratto %}<tr><td>Contratto</td><td>{{ obj.contratto.numero }} ({{ obj.contratto.get_tipo_display }})</td></tr>{% endif %}
+  <tr><td>Tipo intervento</td><td>{{ obj.get_tipo_display }}</td></tr>
+</table>
+
+<h2>Tempi</h2>
+<table>
+  <tr><th>Data</th><th>Inizio</th><th>Fine</th><th>Pausa</th><th>Ore lavoro</th><th>Ore viaggio</th><th>Km</th></tr>
+  <tr><td>{{ obj.data|date:"d/m/Y" }}</td><td>{{ obj.ora_inizio|time:"H:i" }}</td><td>{{ obj.ora_fine|time:"H:i" }}</td>
+      <td>{{ obj.pausa_minuti }} min</td><td><b>{{ obj.ore_lavoro }}</b></td><td>{{ obj.ore_viaggio }}</td><td>{{ obj.km }}</td></tr>
+</table>
+
+{% if obj.problema %}<h2>Problema riscontrato</h2><div class="box">{{ obj.problema }}</div>{% endif %}
+<h2>Lavoro svolto</h2><div class="box">{{ obj.lavoro_svolto }}</div>
+
+{% with ricambi=obj.ricambi.all %}{% if ricambi %}
+<h2>Ricambi e materiali</h2>
+<table>
+  <tr><th>Codice</th><th>Descrizione</th><th>Q.tà</th><th>Matr. installata</th><th>Matr. rimossa</th></tr>
+  {% for r in ricambi %}<tr><td>{{ r.codice }}</td><td>{{ r.descrizione }}</td><td>{{ r.quantita|floatformat:"-2" }}</td><td>{{ r.matricola_installata }}</td><td>{{ r.matricola_rimossa }}</td></tr>{% endfor %}
+</table>
+{% endif %}{% endwith %}
+
+<h2>Esito</h2>
+<p class="{% if obj.esito == 'risolto' %}esito-ok{% else %}esito-ko{% endif %}">{{ obj.get_esito_display }}</p>
+{% if obj.note_cliente %}<h2>Osservazioni del cliente</h2><div class="box">{{ obj.note_cliente }}</div>{% endif %}
+{% endblock %}

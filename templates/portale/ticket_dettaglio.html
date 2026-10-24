@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load gp %}
+{% block title %}{{ ticket.codice }}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<p class="muted small"><span class="code">{{ ticket.codice }}</span> · aperta il {{ ticket.creato_il|date:"j F Y, H:i" }}</p>
+<h1>{{ ticket.oggetto }}</h1>
+<p style="display:flex;gap:6px;flex-wrap:wrap">
+  <span class="pill {{ ticket.stato }}">{{ ticket.get_stato_display }}</span>
+  <span class="pill {{ ticket.priorita }}">{{ ticket.get_priorita_display }}</span>
+  <span class="pill">{{ ticket.get_categoria_display }}</span>
+  {% sla_badge ticket %}
+</p>
+
+<div class="card">
+  <div class="row2 small">
+    <div><span class="muted">Richiedente</span><br>{{ ticket.richiedente_nome }}</div>
+    <div><span class="muted">Apparato</span><br>{% if ticket.apparato %}{{ ticket.apparato }}{% else %}{{ ticket.matricola_dichiarata|default:"—" }}{% endif %}</div>
+  </div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+  <div class="txt" style="white-space:pre-wrap">{{ ticket.descrizione }}</div>
+</div>
+
+<h2 style="margin-top:26px">Aggiornamenti</h2>
+<ul class="timeline">
+  {% for tipo, quando, x in timeline %}
+    {% if tipo == "msg" %}
+      <li class="bubble {% if x.da_cliente %}cliente{% endif %}">
+        <div class="who">{% if x.da_cliente %}{{ x.nome_visualizzato }}{% else %}Assistenza · {{ x.nome_visualizzato }}{% endif %} · {{ quando|date:"j/m/Y H:i" }}</div>
+        <div class="txt">{{ x.testo }}</div>
+        {% if x.allegato %}<p class="small"><a href="{% url 'portale:allegato' ticket.token x.pk %}">📎 Scarica allegato</a></p>{% endif %}
+      </li>
+    {% else %}
+      <li class="evento">{{ quando|date:"j/m H:i" }} — {{ x.descrizione }}</li>
+    {% endif %}
+  {% empty %}
+    <li class="muted">Nessun aggiornamento per ora.</li>
+  {% endfor %}
+</ul>
+
+{% if ticket.stato == "risolto" %}
+  <div class="card" style="border-color:rgba(45,212,167,.5)">
+    <b>L'assistenza ha segnato il problema come risolto.</b>
+    <p class="muted small">Se è tutto a posto confermalo; se il problema persiste scrivici qui sotto e il ticket torna in lavorazione.</p>
+    <form method="post">{% csrf_token %}<input type="hidden" name="azione" value="conferma_risoluzione">
+      <button class="btn small">✔ Confermo, è risolto</button></form>
+  </div>
+{% endif %}
+
+{% if ticket.stato != "chiuso" %}
+  <form method="post" enctype="multipart/form-data" class="card" style="margin-top:16px">
+    {% csrf_token %}
+    {% include "includes/field.html" with field=form.testo %}
+    {% include "includes/field.html" with field=form.allegato %}
+    <button class="btn">Invia</button>
+  </form>
+{% else %}
+  <p class="muted">Ticket chiuso. Per un nuovo problema <a href="{% url 'portale:apri_ticket' %}">apri una nuova richiesta</a>.</p>
+{% endif %}
+{% endblock %}

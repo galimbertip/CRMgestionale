@@ -1,0 +1,50 @@
+# GPverse CRM — avvio:  cp .env.example .env  (e modifica)  →  docker compose up -d --build
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gpverse
+      POSTGRES_USER: gpverse
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?imposta DB_PASSWORD nel file .env}
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gpverse"]
+      interval: 5s
+      retries: 10
+
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://gpverse:${DB_PASSWORD}@db:5432/gpverse
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PORT:-8000}:8000"
+    volumes:
+      - media:/data/media
+
+  # Backup giornaliero del database in ./backup (ultimi 14 giorni)
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      PGPASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./backup:/backup
+    entrypoint: >
+      sh -c 'while true; do
+        pg_dump -h db -U gpverse gpverse | gzip > /backup/gpverse-$$(date +%F).sql.gz;
+        find /backup -name "gpverse-*.sql.gz" -mtime +14 -delete;
+        sleep 86400; done'
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db:
+  media:

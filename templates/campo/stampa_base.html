@@ -1,0 +1,49 @@
+{% load static %}<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ obj.numero }} · {{ titolo }}</title>
+  <style>
+    @page { size: A4; margin: 14mm 12mm; }
+    * { box-sizing: border-box; }
+    body { font: 10.5pt/1.45 "Inter", system-ui, sans-serif; color: #111; margin: 0; background: #e9edf3; }
+    .page { background: #fff; max-width: 210mm; margin: 16px auto; padding: 14mm 12mm; box-shadow: 0 2px 14px rgba(0,0,0,.12); }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0aa9c0; padding-bottom: 8px; }
+    header img { height: 46px; border-radius: 6px; }
+    header .doc { text-align: right; }
+    header .doc b { display: block; font-size: 14pt; letter-spacing: .02em; }
+    h2 { font-size: 10.5pt; text-transform: uppercase; letter-spacing: .06em; color: #0a7d8c; margin: 16px 0 6px; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { border: 1px solid #cfd6df; padding: 4px 6px; vertical-align: top; text-align: left; }
+    th { background: #f1f5f9; font-weight: 600; font-size: 9pt; }
+    .kv td:first-child { width: 28%; color: #555; background: #fafbfc; }
+    .box { border: 1px solid #cfd6df; padding: 8px; min-height: 40px; white-space: pre-wrap; }
+    .esito-ok { color: #15803d; font-weight: 700; } .esito-ko { color: #b91c1c; font-weight: 700; }
+    .firme { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+    .firme div { border-top: 1px solid #555; padding-top: 4px; font-size: 9pt; min-height: 80px; }
+    .firme img { max-height: 70px; display: block; }
+    footer { margin-top: 18px; font-size: 8pt; color: #777; text-align: center; }
+    .toolbar { text-align: center; margin: 14px; }
+    .toolbar button, .toolbar a { font: 600 10pt sans-serif; padding: 8px 14px; border-radius: 8px; border: 0; background: #0aa9c0; color: #fff; cursor: pointer; text-decoration: none; margin: 0 4px; }
+    @media print { body { background: #fff; } .page { box-shadow: none; margin: 0; padding: 0; max-width: none; } .toolbar { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="toolbar"><button onclick="window.print()">🖨 Stampa / Salva PDF</button> <a href="javascript:history.back()">Indietro</a></div>
+  <div class="page">
+    <header>
+      <img src="{% static 'img/gpverse-logo.jpg' %}" alt="GPverse">
+      <div class="doc"><b>{{ titolo }}</b>N. {{ obj.numero }} del {{ obj.data|date:"d/m/Y" }}</div>
+    </header>
+    {% block body %}{% endblock %}
+    <div class="firme">
+      <div>Il tecnico<br><b>{{ obj.tecnico|default:"" }}</b></div>
+      <div>Per il cliente{% if obj.firmatario %}: <b>{{ obj.firmatario }}</b>{% endif %}
+        {% if obj.firma %}<img src="{{ obj.firma.url }}" alt="firma">
+        <span style="color:#777">Firmato il {{ obj.firmato_il|date:"d/m/Y H:i" }}</span>{% endif %}</div>
+    </div>
+    <footer>Documento generato da {{ GP_PRODUCT }} {{ GP_VERSION_LABEL }}</footer>
+  </div>
+</body>
+</html>

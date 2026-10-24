@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Registro versioni{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>Registro versioni</h1>
+<p class="muted">Versione installata: <span class="ver">{{ GP_VERSION_LABEL }}</span> · schema V.maior.minor.patch</p>
+<div style="margin-top:24px;padding-left:6px">
+{% for r in releases %}
+  <section class="release">
+    <h2>{{ r.label }}{% if r.version == GP_VERSION %} <span class="pill nuovo">in uso</span>{% endif %} <span class="muted small">{{ r.date }}</span></h2>
+    {% for titolo, voci in r.sections.items %}
+      <h3>{{ titolo }}</h3>
+      <ul>{% for v in voci %}<li>{{ v }}</li>{% endfor %}</ul>
+    {% endfor %}
+  </section>
+{% empty %}
+  <p class="muted">Nessuna voce nel registro.</p>
+{% endfor %}
+</div>
+{% endblock %}

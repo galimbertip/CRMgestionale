@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Ritrova un ticket{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>Ritrova un ticket</h1>
+<p class="muted">Inserisci il codice (es. TK-2026-00012) e l'email usata per aprirlo: ti rimandiamo il link.</p>
+<form method="post" class="card">
+  {% csrf_token %}
+  <div class="field"><label for="codice">Codice ticket</label><input id="codice" name="codice" required></div>
+  <div class="field"><label for="email">Email</label><input id="email" type="email" name="email" required></div>
+  <button class="btn">Inviami il link</button>
+</form>
+{% endblock %}

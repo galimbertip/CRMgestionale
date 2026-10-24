@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Firma {{ obj.numero }}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<p class="muted small">{{ titolo }} · <span class="code">{{ obj.numero }}</span></p>
+<h1>Firma del cliente</h1>
+<p class="muted">{{ obj.cliente }} · {{ obj.data|date:"j F Y" }}. Chiedi al cliente di rileggere il documento
+  (<a href="{% url 'stampa' tipo obj.pk %}" target="_blank">anteprima</a>) e di firmare qui sotto con il dito.</p>
+
+<form method="post" id="f" class="card">
+  {% csrf_token %}
+  <div class="field"><label for="firmatario">Nome e cognome del firmatario</label>
+    <input id="firmatario" name="firmatario" value="{{ obj.firmatario }}" required autocomplete="off"></div>
+  <div class="sig-wrap"><canvas id="pad"></canvas><div class="base"></div></div>
+  <input type="hidden" name="firma" id="firma">
+  <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+    <button class="btn" type="submit">✔ Conferma firma</button>
+    <button class="btn ghost" type="button" id="clear">Cancella</button>
+    <a class="btn ghost" href="{{ url_admin }}">Annulla</a>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const c = document.getElementById('pad'), ctx = c.getContext('2d');
+  let drawing = false, dirty = false, last = null;
+  function size() {
+    const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    const img = dirty ? c.toDataURL() : null;
+    c.width = r.width * d; c.height = r.height * d; ctx.scale(d, d);
+    ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0b1b3a';
+    if (img) { const i = new Image(); i.onload = () => ctx.drawImage(i, 0, 0, r.width, r.height); i.src = img; }
+  }
+  const pos = e => { const r = c.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  c.addEventListener('pointerdown', e => { drawing = true; last = pos(e); c.setPointerCapture(e.pointerId); });
+  c.addEventListener('pointermove', e => {
+    if (!drawing) return; const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(...last); ctx.lineTo(...p); ctx.stroke(); last = p; dirty = true;
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => c.addEventListener(t, () => drawing = false));
+  document.getElementById('clear').onclick = () => { ctx.clearRect(0, 0, c.width, c.height); dirty = false; };
+  document.getElementById('f').addEventListener('submit', e => {
+    if (!dirty) { e.preventDefault(); alert('Manca la firma.'); return; }
+    document.getElementById('firma').value = c.toDataURL('image/png');
+  });
+  window.addEventListener('resize', size); size();
+})();
+</script>
+{% endblock %}

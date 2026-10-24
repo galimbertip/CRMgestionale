@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load gp %}
+{% block title %}Cruscotto{% endblock %}
+{% block brand_sub %}Cruscotto tecnico{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+  <div><h1>Ciao {{ user.first_name|default:user.username }}</h1><p class="muted" style="margin:0">{% now "l j F Y" %}</p></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a class="btn small" href="{% url 'admin:assistenza_ticket_add' %}">+ Ticket</a>
+    <a class="btn small ghost" href="{% url 'admin:assistenza_rapportino_add' %}">+ Rapportino</a>
+    <a class="btn small ghost" href="{% url 'admin:commesse_sopralluogo_add' %}">+ Sopralluogo</a>
+    <a class="btn small ghost" href="{% url 'admin:commesse_collaudo_add' %}">+ Collaudo</a>
+  </div>
+</div>
+
+<div class="grid cols-4">
+  <a class="card stat ok" href="{% url 'admin:assistenza_ticket_changelist' %}?stato__in=nuovo,preso_in_carico,in_lavorazione,attesa_cliente"><div class="n">{{ ticket_aperti|length }}</div><div class="l">Ticket aperti</div></a>
+  <div class="card stat bad"><div class="n">{{ conteggio_sla.scaduto }}</div><div class="l">Fuori SLA</div></div>
+  <div class="card stat warn"><div class="n">{{ conteggio_sla.attenzione }}</div><div class="l">SLA in scadenza</div></div>
+  <a class="card stat" href="{% url 'admin:assistenza_ticket_changelist' %}?cliente__isempty=1"><div class="n">{{ n_da_smistare }}</div><div class="l">Da smistare (cliente non riconosciuto)</div></a>
+  <div class="card stat"><div class="n">{{ n_miei }}</div><div class="l">Assegnati a me</div></div>
+  <a class="card stat" href="{% url 'admin:assistenza_apparato_changelist' %}?stato__exact=guasto"><div class="n">{{ apparati_guasti }}<span class="muted" style="font-size:1rem"> / {{ apparati_totali }}</span></div><div class="l">Apparati guasti / installati</div></a>
+  <div class="card stat"><div class="n">{{ risolti_30gg.tot }}</div><div class="l">Risolti ultimi 30 gg{% if risolti_30gg.violati %} · {{ risolti_30gg.violati }} fuori SLA{% endif %}</div></div>
+</div>
+
+<div class="card" style="margin-top:16px;overflow-x:auto">
+  <h2>Coda ticket per scadenza SLA</h2>
+  <table class="table">
+    <thead><tr><th>Codice</th><th>Oggetto</th><th>Cliente</th><th>Priorità</th><th>Stato</th><th>SLA</th><th>Tecnico</th></tr></thead>
+    <tbody>
+    {% for t in ticket_aperti %}
+      <tr>
+        <td><a class="code" href="{% url 'admin:assistenza_ticket_change' t.pk %}">{{ t.codice }}</a></td>
+        <td>{{ t.oggetto|truncatechars:60 }}</td>
+        <td>{% if t.cliente %}{{ t.cliente }}{% else %}<i style="color:var(--warn)">da smistare</i>{% endif %}</td>
+        <td><span class="pill {{ t.priorita }}">{{ t.get_priorita_display }}</span></td>
+        <td><span class="pill {{ t.stato }}">{{ t.get_stato_display }}</span></td>
+        <td>{% sla_badge t %}</td>
+        <td class="small">{{ t.assegnato_a|default:"—" }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7" class="muted">Nessun ticket aperto. 🎉</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="grid cols-2" style="margin-top:16px">
+  <div class="card">
+    <h2>Contratti in scadenza</h2>
+    {% for c in contratti_in_scadenza %}
+      <p style="margin:.3rem 0"><a href="{% url 'admin:assistenza_contratto_change' c.pk %}">{{ c.numero }}</a> · {{ c.cliente }}
+        <span class="sla attenzione">tra {{ c.giorni_alla_scadenza }} gg</span></p>
+    {% empty %}<p class="muted">Nessun contratto in scadenza nei prossimi 90 giorni.</p>{% endfor %}
+  </div>
+  <div class="card">
+    <h2>Commesse in corso</h2>
+    {% for r in commesse_per_stato %}
+      <p style="margin:.3rem 0"><a href="{% url 'admin:commesse_commessa_changelist' %}?stato__exact={{ r.stato }}">{{ r.stato|capfirst }}</a>: <b>{{ r.n }}</b></p>
+    {% empty %}<p class="muted">Nessuna commessa aperta.</p>{% endfor %}
+  </div>
+  <div class="card">
+    <h2>Ultimi sopralluoghi</h2>
+    {% for s in sopralluoghi %}
+      <p style="margin:.3rem 0"><a href="{% url 'admin:commesse_sopralluogo_change' s.pk %}">{{ s.numero }}</a> · {{ s.commessa.cliente }} · {{ s.get_esito_display }}</p>
+    {% empty %}<p class="muted">Nessun sopralluogo.</p>{% endfor %}
+  </div>
+  <div class="card">
+    <h2>Ultimi collaudi</h2>
+    {% for c in collaudi %}
+      <p style="margin:.3rem 0"><a href="{% url 'admin:commesse_collaudo_change' c.pk %}">{{ c.numero }}</a> · {{ c.commessa.cliente }} · {{ c.get_esito_display }}</p>
+    {% empty %}<p class="muted">Nessun collaudo.</p>{% endfor %}
+  </div>
+</div>
+{% endblock %}

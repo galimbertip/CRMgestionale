@@ -1,0 +1,39 @@
+{% extends "admin/base.html" %}
+{% load static %}
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | GPverse CRM{% endblock %}
+{% block extrahead %}{{ block.super }}<link rel="icon" href="{% static 'img/favicon.png' %}">{% endblock %}
+{% block extrastyle %}{{ block.super }}
+<style>
+  :root, html[data-theme="dark"], html[data-theme="light"] {
+    --primary: #0d1b2a; --secondary: #12263a; --header-bg: #070a10; --header-color: #3fe4f3;
+    --header-link-color: #e6edf7; --breadcrumbs-bg: #12263a; --link-fg: #0aa9c0; --link-hover-color: #8d7dff;
+    --button-bg: #0d1b2a; --button-hover-bg: #12263a; --default-button-bg: #0aa9c0; --default-button-hover-bg: #0890a3;
+  }
+  #header { border-bottom: 1px solid #22304a; }
+  #site-name a, #site-name a:link, #site-name a:visited { color:#3fe4f3 !important; display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.08em; }
+  #site-name img { height: 30px; border-radius: 5px; }
+  .gp-ver { font-size: .75rem; border: 1px solid rgba(63,228,243,.45); border-radius: 999px; padding: 1px 8px;
+    color: #3fe4f3 !important; letter-spacing: 0; font-weight: 600; }
+  #result_list td.field-codice, #result_list th.field-codice, #result_list td.field-numero, #result_list th.field-numero, td.field-sla { white-space: nowrap; }
+  .gp-foot { text-align:center; padding: 18px; color: var(--body-quiet-color); font-size: .8rem; }
+</style>
+{% endblock %}
+{% block branding %}
+<div id="site-name"><a href="{% url 'admin:index' %}"><img src="{% static 'img/gp-mark.jpg' %}" alt="">GPVERSE CRM</a></div>
+{% endblock %}
+{% block usertools %}
+{% if has_permission %}
+<div id="user-tools">
+  <a class="gp-ver" href="{% url 'changelog' %}" title="Registro versioni">{{ GP_VERSION_LABEL }}</a> /
+  <a href="{% url 'dashboard' %}">Cruscotto</a> /
+  {% block welcome-msg %}<strong>{% firstof user.get_short_name user.get_username %}</strong> /{% endblock %}
+  {% block userlinks %}
+    <a href="{% url 'admin:password_change' %}">Password</a> /
+    <form id="logout-form" method="post" action="{% url 'admin:logout' %}">{% csrf_token %}<button type="submit">Esci</button></form>
+    {% include "admin/color_theme_toggle.html" %}
+  {% endblock %}
+</div>
+{% endif %}
+{% endblock %}
+{% block nav-global %}{% endblock %}
+{% block footer %}<div id="footer" class="gp-footer gp-foot">GPverse CRM {{ GP_VERSION_LABEL }} · <a href="{% url 'changelog' %}">registro versioni</a></div>{% endblock %}

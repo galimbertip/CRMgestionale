@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Richiesta ricevuta{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div class="card" style="text-align:center;padding:36px 24px">
+  <p class="muted">Richiesta ricevuta</p>
+  <h1 class="code" style="font-size:2rem">{{ ticket.codice }}</h1>
+  <p>Grazie {{ ticket.richiedente_nome }}. Ti abbiamo inviato una conferma a <b>{{ ticket.richiedente_email }}</b>.</p>
+  {% if ticket.scadenza_presa_in_carico %}
+    <p class="muted">Presa in carico prevista entro: <b>{{ ticket.scadenza_presa_in_carico|date:"l j F, H:i" }}</b></p>
+  {% endif %}
+  <p style="margin-top:22px"><a class="btn" href="{{ ticket.get_absolute_url }}">Segui la richiesta</a></p>
+  <p class="small muted">Salva questa pagina tra i preferiti: il link dà accesso al ticket senza password.</p>
+</div>
+{% endblock %}

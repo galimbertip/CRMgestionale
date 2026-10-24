@@ -1,0 +1,13 @@
+<h2>Checklist</h2>
+<table>
+  <tr><th style="width:16%">Area</th><th>Verifica</th><th style="width:10%">Esito</th><th style="width:16%">Valore</th><th style="width:22%">Note</th></tr>
+  {% for r in obj.righe.all %}
+  <tr>
+    <td>{% ifchanged r.gruppo %}{{ r.gruppo }}{% endifchanged %}</td>
+    <td>{{ r.testo }}</td>
+    <td class="{% if r.esito == 'ok' %}esito-ok{% elif r.esito == 'ko' %}esito-ko{% endif %}">{{ r.get_esito_display }}</td>
+    <td>{{ r.valore }}</td>
+    <td>{{ r.note }}</td>
+  </tr>
+  {% endfor %}
+</table>
