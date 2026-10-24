@@ -35,7 +35,8 @@ class Commessa(Timestamped):
     data_presa_in_carico = models.DateField(null=True, blank=True)
 
     responsabile = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
+        limit_choices_to={"ruolo__in": ["admin", "tecnico"]},
     )
     valore = models.DecimalField("valore (€)", max_digits=12, decimal_places=2, null=True, blank=True)
     data_apertura = models.DateField(default=timezone.localdate)
@@ -118,7 +119,8 @@ class DocumentoCampo(Timestamped):
     sede = models.ForeignKey("anagrafica.Sede", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     data = models.DateField(default=timezone.localdate)
     tecnico = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
+        limit_choices_to={"ruolo__in": ["admin", "tecnico"]},
     )
     modello = models.ForeignKey(
         ModelloChecklist, null=True, blank=True, on_delete=models.SET_NULL, related_name="+",

@@ -26,6 +26,7 @@
 <div id="user-tools">
   <a class="gp-ver" href="{% url 'changelog' %}" title="Registro versioni">{{ GP_VERSION_LABEL }}</a> /
   <a href="{% url 'dashboard' %}">Cruscotto</a> /
+  {% if user.is_admin_crm %}<a href="{% url 'admin:core_utente_changelist' %}">Utenti</a> /{% endif %}
   {% block welcome-msg %}<strong>{% firstof user.get_short_name user.get_username %}</strong> /{% endblock %}
   {% block userlinks %}
     <a href="{% url 'admin:password_change' %}">Password</a> /

@@ -30,6 +30,19 @@ del cliente o dell'apparato; senza contratto usa il livello "Senza contratto".
 **Sul campo** il tecnico apre il rapportino/collaudo/sopralluogo dal telefono, fa firmare il cliente
 col dito (*Raccogli firma cliente*) e stampa o salva il PDF dal browser.
 
+## Utenti e livelli
+
+| Livello | Dove entra | Cosa può fare |
+|---|---|---|
+| **Admin** | cruscotto + back-office | tutto: utenti, contratti, livelli SLA, modelli di checklist, cancellazioni |
+| **Tecnico** | cruscotto + back-office | ticket, rapportini, sopralluoghi, collaudi, commesse, parco installato, anagrafica; contratti/SLA/checklist in sola lettura, nessuna cancellazione |
+| **Cliente** | solo portale | apre ticket, vede lo storico della sua azienda (o solo i suoi, se così impostato), risponde |
+
+Il livello si sceglie nella scheda utente (menu **Utenti**, visibile solo agli admin) e imposta da solo
+accesso e permessi: non servono flag o permessi a mano. Un utente nuovo è *cliente* finché non gli si
+dà un altro livello. Gli admin creano utenti con o senza password: senza, parte un'email per impostarla.
+Un admin non può modificare un superuser né togliersi da solo l'accesso.
+
 ## Prova in locale (2 minuti)
 
 ```bash
@@ -40,7 +53,8 @@ python manage.py demo          # dati di esempio
 python manage.py runserver
 ```
 
-- Back-office / cruscotto: http://localhost:8000 → `admin` / `demo-admin-2026`
+- Admin: http://localhost:8000 → `admin` / `demo-admin-2026`
+- Tecnico: `tecnico` / `demo-tecnico-2026`
 - Portale cliente: http://localhost:8000/assistenza/ → `giulia@logisticarapida.example` / `demo-cliente-2026`
 
 Test: `pytest`
@@ -92,7 +106,7 @@ Il comando aggiorna `VERSION` e apre la voce in `CHANGELOG.md`; un test verifica
 2. **Modelli di checklist**: adatta le voci di sopralluogo e collaudo ai tuoi prodotti.
 3. Crea clienti, sedi, contatti; per dare l'accesso al portale seleziona i contatti e usa l'azione
    *Crea accesso al portale* (parte un'email per impostare la password).
-4. **Utenti** interni: ruolo Tecnico/Responsabile, flag "staff" e i permessi sui moduli.
+4. **Utenti** interni: crea i colleghi con livello Tecnico o Admin.
 
 ## Struttura
 

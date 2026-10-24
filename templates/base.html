@@ -20,6 +20,7 @@
       {% if user.is_authenticated and user.is_staff %}
         <a href="{% url 'dashboard' %}">Cruscotto</a>
         <a href="{% url 'admin:assistenza_ticket_changelist' %}">Ticket</a>
+        {% if user.is_admin_crm %}<a href="{% url 'admin:core_utente_changelist' %}">Utenti</a>{% endif %}
         <a href="{% url 'admin:index' %}">Back-office</a>
       {% else %}
         <a href="{% url 'portale:apri_ticket' %}">Nuova richiesta</a>

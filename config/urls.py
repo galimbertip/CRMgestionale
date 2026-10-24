@@ -1,11 +1,13 @@
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth import views as auth_views
 from django.urls import include, path, re_path
 from django.views.static import serve
 
 from apps.assistenza import views as campo
 from apps.core import views as core
+from apps.core.forms import ImpostaPasswordForm
 
 urlpatterns = [
     path("", core.home, name="home"),
@@ -14,6 +16,8 @@ urlpatterns = [
     path("campo/<str:tipo>/<int:pk>/firma/", campo.firma, name="firma"),
     path("campo/<str:tipo>/<int:pk>/stampa/", campo.stampa, name="stampa"),
     path("assistenza/", include("apps.portale.urls")),
+    path("account/password_reset/", auth_views.PasswordResetView.as_view(form_class=ImpostaPasswordForm),
+         name="password_reset"),
     path("account/", include("django.contrib.auth.urls")),
     path("admin/", admin.site.urls),
 ]

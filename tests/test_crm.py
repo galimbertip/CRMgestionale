@@ -182,7 +182,7 @@ def test_login_con_email(client, cliente):
 
 @pytest.fixture
 def staff(db):
-    return Utente.objects.create_user("tec", "tec@gp.it", "pw-123456!", is_staff=True, is_superuser=True)
+    return Utente.objects.create_superuser("tec", "tec@gp.it", "pw-123456!")
 
 
 def test_sopralluogo_e_collaudo_copiano_checklist(cliente, staff):
@@ -224,3 +224,96 @@ def test_cruscotto_e_admin(client, staff, contratto):
                  "core_utente"]:
         assert client.get(reverse(f"admin:{nome}_changelist")).status_code == 200, nome
         assert client.get(reverse(f"admin:{nome}_add")).status_code == 200, nome
+
+
+# ------------------------------------------------------------- livelli utente
+
+@pytest.fixture
+def admin_crm(db):
+    return Utente.objects.create_user("capo", "capo@gp.it", "pw-123456!", ruolo="admin")
+
+
+@pytest.fixture
+def tecnico(db):
+    return Utente.objects.create_user("luca", "luca@gp.it", "pw-123456!", ruolo="tecnico")
+
+
+def test_default_e_cliente_senza_backoffice(db):
+    u = Utente.objects.create_user("x", "x@x.it", "pw-123456!")
+    assert u.ruolo == "cliente" and not u.is_staff
+
+
+def test_livello_imposta_flag_e_gruppi(admin_crm, tecnico, cliente):
+    assert admin_crm.is_staff and admin_crm.groups.filter(name="Amministratori CRM").exists()
+    assert tecnico.is_staff and list(tecnico.groups.values_list("name", flat=True)) == ["Tecnici"]
+    tecnico.ruolo, tecnico.cliente = "cliente", cliente
+    tecnico.save()
+    tecnico = Utente.objects.get(pk=tecnico.pk)
+    assert not tecnico.is_staff and not tecnico.groups.exists()
+    assert not tecnico.has_perm("assistenza.view_ticket")
+
+
+def test_superuser_e_sempre_admin(db):
+    su = Utente.objects.create_superuser("root", "r@x.it", "pw-123456!")
+    assert su.ruolo == "admin" and su.is_staff
+
+
+def test_permessi_tecnico(tecnico):
+    assert tecnico.has_perm("assistenza.change_ticket")
+    assert tecnico.has_perm("assistenza.add_rapportino")
+    assert tecnico.has_perm("commesse.add_collaudo")
+    assert not tecnico.has_perm("assistenza.delete_ticket")
+    assert not tecnico.has_perm("assistenza.change_contratto")
+    assert not tecnico.has_perm("assistenza.change_livellosla")
+    assert not tecnico.has_perm("core.change_utente")
+
+
+def test_tecnico_non_gestisce_utenti(client, tecnico, admin_crm):
+    client.force_login(tecnico)
+    assert client.get(reverse("admin:core_utente_changelist")).status_code == 403
+    assert client.get(reverse("admin:core_utente_change", args=[admin_crm.pk])).status_code in (302, 403)
+    assert client.get(reverse("admin:assistenza_ticket_add")).status_code == 200
+    assert client.get(reverse("admin:assistenza_contratto_add")).status_code == 403
+    # ma può cercare i colleghi da assegnare ai ticket (e non vede i clienti)
+    Utente.objects.create_user("cli", "cli@acme.it", "pw-123456!")
+    r = client.get(reverse("admin:autocomplete"), {"app_label": "assistenza", "model_name": "ticket",
+                                                   "field_name": "assegnato_a", "term": ""})
+    nomi = [x["text"] for x in r.json()["results"]]
+    assert "luca" in nomi and "cli" not in nomi
+
+
+def test_admin_crea_cliente_e_non_tocca_superuser(client, admin_crm, cliente):
+    su = Utente.objects.create_superuser("root", "r@x.it", "pw-123456!")
+    client.force_login(admin_crm)
+    assert client.get(reverse("admin:core_utente_changelist")).status_code == 200
+    r = client.post(reverse("admin:core_utente_add"), {
+        "username": "nuovo@acme.it", "email": "nuovo@acme.it", "first_name": "N", "last_name": "C",
+        "ruolo": "cliente", "cliente": cliente.pk, "vede_ticket_azienda": "on", "usable_password": "false",
+    })
+    assert r.status_code == 302, r.content.decode()[:2000]
+    nuovo = Utente.objects.get(username="nuovo@acme.it")
+    assert nuovo.ruolo == "cliente" and not nuovo.is_staff and not nuovo.has_usable_password()
+    assert any("password" in m.body for m in mail.outbox)
+    assert client.get(reverse("admin:core_utente_change", args=[su.pk])).status_code == 200  # solo lettura
+    r = client.post(reverse("admin:core_utente_change", args=[su.pk]), {"username": "preso"})
+    su.refresh_from_db()
+    assert su.username == "root"
+
+
+def test_cliente_senza_azienda_rifiutato(client, admin_crm):
+    client.force_login(admin_crm)
+    r = client.post(reverse("admin:core_utente_add"), {
+        "username": "orfano", "email": "o@x.it", "ruolo": "cliente", "usable_password": "false"})
+    assert r.status_code == 200 and not Utente.objects.filter(username="orfano").exists()
+
+
+def test_cliente_che_vede_solo_i_propri(client, cliente):
+    u = Utente.objects.create_user("c@acme.it", "c@acme.it", "pw-123456!", ruolo="cliente", cliente=cliente,
+                                   vede_ticket_azienda=False)
+    Ticket.objects.create(cliente=cliente, richiedente_nome="a", richiedente_email="collega@acme.it",
+                          oggetto="DEL COLLEGA", descrizione="d")
+    Ticket.objects.create(cliente=cliente, utente_portale=u, richiedente_nome="c", richiedente_email="c@acme.it",
+                          oggetto="MIO PERSONALE", descrizione="d")
+    client.force_login(u)
+    html = client.get(reverse("portale:miei_ticket") + "?filtro=tutti").content.decode()
+    assert "MIO PERSONALE" in html and "DEL COLLEGA" not in html

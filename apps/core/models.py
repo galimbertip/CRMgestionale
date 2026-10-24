@@ -1,32 +1,69 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
+
+
+class UtenteManager(UserManager):
+    def create_superuser(self, username, email=None, password=None, **extra):
+        extra.setdefault("ruolo", "admin")
+        return super().create_superuser(username, email, password, **extra)
 
 
 class Utente(AbstractUser):
     class Ruolo(models.TextChoices):
-        RESPONSABILE = "responsabile", "Responsabile assistenza"
+        ADMIN = "admin", "Amministratore"
         TECNICO = "tecnico", "Tecnico"
-        COMMERCIALE = "commerciale", "Commerciale / prevendita"
-        CLIENTE = "cliente", "Cliente (portale)"
+        CLIENTE = "cliente", "Cliente (solo portale)"
 
-    ruolo = models.CharField(max_length=20, choices=Ruolo.choices, default=Ruolo.TECNICO)
+    ruolo = models.CharField(
+        "livello", max_length=20, choices=Ruolo.choices, default=Ruolo.CLIENTE,
+        help_text="Amministratore: tutto, compresa la gestione utenti. Tecnico: lavoro operativo, "
+                  "senza cancellazioni né gestione di utenti, contratti e SLA. Cliente: solo portale.",
+    )
     cliente = models.ForeignKey(
         "anagrafica.Cliente",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name="utenti_portale",
-        help_text="Solo per utenti del portale: l'azienda di cui vedono i ticket.",
+        help_text="Solo per i clienti: l'azienda di cui vedono ticket e apparati.",
+    )
+    vede_ticket_azienda = models.BooleanField(
+        "vede tutti i ticket dell'azienda", default=True,
+        help_text="Se disattivato, il cliente vede solo i ticket aperti da lui.",
     )
     telefono = models.CharField(max_length=40, blank=True)
+
+    objects = UtenteManager()
 
     class Meta:
         verbose_name = "utente"
         verbose_name_plural = "utenti"
 
+    def save(self, *args, **kwargs):
+        # il livello decide l'accesso: non si gestiscono flag e permessi a mano
+        if self.is_superuser:
+            self.ruolo = self.Ruolo.ADMIN
+        if self.ruolo == self.Ruolo.CLIENTE:
+            self.is_staff = False
+        else:
+            self.is_staff = True
+            self.cliente = None
+        super().save(*args, **kwargs)
+        from .ruoli import allinea_gruppi
+
+        allinea_gruppi(self)
+
     @property
     def is_cliente(self):
         return self.ruolo == self.Ruolo.CLIENTE
+
+    @property
+    def is_tecnico(self):
+        return self.ruolo == self.Ruolo.TECNICO
+
+    @property
+    def is_admin_crm(self):
+        return self.ruolo == self.Ruolo.ADMIN or self.is_superuser
 
     @property
     def is_interno(self):

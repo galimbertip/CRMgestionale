@@ -7,6 +7,14 @@ Formato: versioni `V.maior.minor.patch` (Semantic Versioning).
 - **minor**: nuove funzioni compatibili
 - **patch**: correzioni
 
+## [0.2.0] - 2026-10-24
+
+### Aggiunto
+- Gestione utenti a tre livelli: admin, tecnico, cliente, con permessi applicati automaticamente dal livello.
+- Menu Utenti riservato agli admin; creazione utenti con o senza password e invio automatico del link per impostarla.
+- I clienti possono essere limitati a vedere solo i propri ticket invece di tutti quelli dell'azienda.
+- Nei campi tecnico/assegnato a si scelgono solo utenti interni.
+
 ## [0.1.0] - 2026-10-24
 
 ### Aggiunto

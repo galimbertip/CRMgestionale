@@ -212,6 +212,7 @@ class Ticket(Timestamped):
     canale = models.CharField(max_length=10, choices=Canale.choices, default=Canale.PORTALE)
     stato = models.CharField(max_length=20, choices=Stato.choices, default=Stato.NUOVO)
     assegnato_a = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                    limit_choices_to={"ruolo__in": ["admin", "tecnico"]},
                                     related_name="ticket_assegnati")
 
     scadenza_presa_in_carico = models.DateTimeField(null=True, blank=True)
@@ -358,7 +359,7 @@ class Rapportino(Timestamped):
                                   related_name="rapportini")
     apparato = models.ForeignKey(Apparato, null=True, blank=True, on_delete=models.SET_NULL, related_name="rapportini")
     tecnico = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
-                                related_name="rapportini")
+                                limit_choices_to={"ruolo__in": ["admin", "tecnico"]}, related_name="rapportini")
     data = models.DateField(default=timezone.localdate)
     ora_inizio = models.TimeField()
     ora_fine = models.TimeField()

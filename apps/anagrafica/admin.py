@@ -49,11 +49,14 @@ class ContattoAdmin(admin.ModelAdmin):
     autocomplete_fields = ("cliente",)
     actions = ["crea_accesso_portale"]
 
+    def has_gestione_utenti_permission(self, request):
+        return getattr(request.user, "is_admin_crm", False)
+
     @admin.display(description="Portale", boolean=True)
     def accesso_portale(self, obj):
         return bool(obj.email) and Utente.objects.filter(email__iexact=obj.email, ruolo="cliente").exists()
 
-    @admin.action(description="Crea accesso al portale e invia link password")
+    @admin.action(description="Crea accesso al portale e invia link password", permissions=["gestione_utenti"])
     def crea_accesso_portale(self, request, queryset):
         nuovi = []
         for c in queryset:

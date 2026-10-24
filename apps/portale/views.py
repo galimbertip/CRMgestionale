@@ -119,7 +119,7 @@ def miei_ticket(request):
         qs = qs.filter(stato__in=Ticket.STATI_APERTI)
     elif filtro == "chiusi":
         qs = qs.exclude(stato__in=Ticket.STATI_APERTI)
-    if request.GET.get("solo_miei"):
+    if not u.vede_ticket_azienda or request.GET.get("solo_miei"):
         qs = qs.filter(Q(utente_portale=u) | Q(richiedente_email__iexact=u.email))
     q = request.GET.get("q", "").strip()
     if q:

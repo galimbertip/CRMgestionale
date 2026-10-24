@@ -1,7 +1,6 @@
 """Popola il database con dati di esempio per provare il CRM (da NON usare in produzione)."""
 from datetime import date, time, timedelta
 
-from django.contrib.auth.models import Permission
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -12,7 +11,7 @@ from apps.core.models import Utente
 
 
 class Command(BaseCommand):
-    help = "Crea dati demo: clienti, commesse, apparati, contratti, ticket e utenti (admin/demo, cliente/demo)"
+    help = "Crea dati demo con un utente per livello: admin, tecnico, cliente"
 
     @transaction.atomic
     def handle(self, **opts):
@@ -20,12 +19,10 @@ class Command(BaseCommand):
             self.stdout.write("Dati demo già presenti.")
             return
         oggi = date.today()
-        admin = Utente.objects.create_superuser("admin", "admin@example.com", "demo-admin-2026",
-                                                first_name="Paolo", ruolo="responsabile")
-        tec = Utente.objects.create_user("tecnico", "tecnico@example.com", "demo-tecnico-2026", is_staff=True,
+        admin = Utente.objects.create_user("admin", "admin@example.com", "demo-admin-2026",
+                                           first_name="Paolo", ruolo="admin")
+        tec = Utente.objects.create_user("tecnico", "tecnico@example.com", "demo-tecnico-2026",
                                          first_name="Luca", last_name="Verdi", ruolo="tecnico")
-        tec.user_permissions.set(Permission.objects.filter(
-            content_type__app_label__in=["anagrafica", "assistenza", "commesse"]))
 
         c1 = Cliente.objects.create(ragione_sociale="Logistica Rapida Srl", codice="DEMO1", citta="Milano",
                                     email="info@logisticarapida.example")

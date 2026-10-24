@@ -19,7 +19,7 @@
   <input type="hidden" name="filtro" value="{{ filtro }}">
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
     <input type="search" name="q" value="{{ q }}" placeholder="Cerca per codice, oggetto, matricola" style="flex:1;min-width:220px">
-    {% if user.cliente %}<label class="small"><input type="checkbox" name="solo_miei" value="1" {% if solo_miei %}checked{% endif %}> solo aperti da me</label>{% endif %}
+    {% if user.cliente and user.vede_ticket_azienda %}<label class="small"><input type="checkbox" name="solo_miei" value="1" {% if solo_miei %}checked{% endif %}> solo aperti da me</label>{% endif %}
     <button class="btn small ghost">Filtra</button>
   </div>
 </form>
