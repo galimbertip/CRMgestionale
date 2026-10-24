@@ -57,7 +57,7 @@ python manage.py runserver
 - Tecnico: `tecnico` / `demo-tecnico-2026`
 - Portale cliente: http://localhost:8000/assistenza/ → `giulia@logisticarapida.example` / `demo-cliente-2026`
 
-Test: `pytest`
+Test: `pytest` · Prova guidata: `bash scripts/prova-locale.sh` e la checklist in [`docs/GUIDA-TEST.md`](docs/GUIDA-TEST.md)
 
 ## Installazione su PC di casa o Raspberry Pi
 
