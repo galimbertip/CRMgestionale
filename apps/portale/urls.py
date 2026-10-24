@@ -11,4 +11,6 @@ urlpatterns = [
     path("t/<uuid:token>/", views.ticket_dettaglio, name="ticket_dettaglio"),
     path("t/<uuid:token>/ricevuto/", views.ticket_creato, name="ticket_creato"),
     path("t/<uuid:token>/allegato/<int:msg_id>/", views.allegato, name="allegato"),
+    path("preventivo/<uuid:token>/", views.preventivo, name="preventivo"),
+    path("preventivo/<uuid:token>/stampa/", views.preventivo_stampa, name="preventivo_stampa"),
 ]

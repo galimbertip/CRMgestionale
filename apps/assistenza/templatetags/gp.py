@@ -19,3 +19,13 @@ def sla_badge(ticket):
     quando = timezone.localtime(scad).strftime("%d/%m %H:%M") if scad else ""
     return format_html('<span class="sla {}" title="Scadenza {}">{} · {}</span>', stato, quando,
                        ETICHETTE[stato], quando)
+
+
+@register.filter
+def euro(v):
+    """1234.5 -> "€ 1.234,50" (formato italiano)."""
+    try:
+        s = f"{float(v):,.2f}"
+    except (TypeError, ValueError):
+        return v
+    return "€ " + s.replace(",", "X").replace(".", ",").replace("X", ".")

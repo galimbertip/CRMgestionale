@@ -3,11 +3,15 @@ from datetime import date, time, timedelta
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.test import override_settings
 
 from apps.anagrafica.models import Cliente, Contatto, Sede
 from apps.assistenza.models import Apparato, Contratto, LivelloSLA, MessaggioTicket, Rapportino, Ticket
 from apps.commesse.models import Collaudo, Commessa, Sopralluogo
 from apps.core.models import Utente
+from apps.magazzino.models import (Articolo, DistintaBase, Movimento, OrdineProduzione, RicambioRiparazione,
+                                   RigaDistinta, Riparazione)
+from apps.preventivi.models import Preventivo, RigaPreventivo
 
 
 class Command(BaseCommand):
@@ -84,6 +88,65 @@ class Command(BaseCommand):
                                   ora_inizio=time(9), ora_fine=time(11, 30), km=38, ore_viaggio=1,
                                   problema="Errore E12 su vano 7", lavoro_svolto="Sostituito cablaggio RS485 modulo 2.",
                                   esito="parziale")
+        self._magazzino(oggi, admin, tec, c1, c2, cm1, cm3, apparati, t1)
         self.stdout.write(self.style.SUCCESS(
             "Demo pronta. Back-office: admin / demo-admin-2026 · tecnico / demo-tecnico-2026 · "
             "Portale: giulia@logisticarapida.example / demo-cliente-2026"))
+
+    def _magazzino(self, oggi, admin, tec, c1, c2, cm1, cm3, apparati, t1):
+        A = Articolo.objects.create
+        locker = A(codice="LCK-L24", descrizione="Locker L-24 (24 vani)", tipo="prodotto", a_matricola=True,
+                   costo=5200, prezzo=11800)
+        comp = {
+            "CTRL": A(codice="CMP-CTRL", descrizione="Scheda controller (Raspberry Pi + I/O)", tipo="componente",
+                      a_matricola=True, costo=180, prezzo=390, scorta_minima=4, ubicazione="A1"),
+            "SERR": A(codice="CMP-SERR", descrizione="Serratura elettrica 12V", tipo="ricambio", costo=14,
+                      prezzo=38, scorta_minima=50, ubicazione="A2"),
+            "RS485": A(codice="CMP-RS485", descrizione="Modulo serrature RS485 (12 canali)", tipo="ricambio",
+                       a_matricola=True, costo=65, prezzo=150, scorta_minima=4, ubicazione="A3"),
+            "LTE": A(codice="CMP-LTE", descrizione="Modem LTE industriale", tipo="componente", costo=95,
+                     prezzo=210, scorta_minima=3, ubicazione="B1"),
+            "DISP": A(codice="CMP-DISP", descrizione="Display touch 10\"", tipo="componente", costo=140,
+                      prezzo=290, scorta_minima=2, ubicazione="B2"),
+            "PSU": A(codice="CMP-PSU", descrizione="Alimentatore 12V 10A", tipo="ricambio", costo=32, prezzo=75,
+                     scorta_minima=5, ubicazione="B3"),
+            "STR": A(codice="CMP-STR24", descrizione="Struttura metallica 24 vani", tipo="componente", costo=2100,
+                     prezzo=0, ubicazione="Piazzale"),
+            "CAV": A(codice="CON-CAVO", descrizione="Cavo multipolare 4x0.5", tipo="consumabile", unita="m",
+                     costo=1.2, prezzo=3, scorta_minima=100),
+        }
+        mano = A(codice="SRV-MANO", descrizione="Manodopera tecnico specializzato", tipo="servizio", unita="h",
+                 prezzo=48)
+        A(codice="SRV-KM", descrizione="Rimborso chilometrico", tipo="servizio", unita="km", prezzo=0.6)
+        giacenze = {"CTRL": 3, "SERR": 120, "RS485": 2, "LTE": 2, "DISP": 4, "PSU": 8, "STR": 1, "CAV": 400}
+        for k, q in giacenze.items():
+            Movimento.objects.create(articolo=comp[k], causale="carico_acquisto", quantita=q, utente=admin,
+                                     documento="DDT fornitore 118/2026")
+
+        db = DistintaBase.objects.create(prodotto=locker, versione="2")
+        for k, q in [("STR", 1), ("CTRL", 1), ("RS485", 2), ("SERR", 24), ("LTE", 1), ("DISP", 1), ("PSU", 1),
+                     ("CAV", 30)]:
+            RigaDistinta.objects.create(distinta=db, componente=comp[k], quantita=q)
+
+        p1 = Preventivo.objects.create(cliente=c1, commessa=cm3, tipo="installazione", autore=admin,
+                                       oggetto="Fornitura e installazione 2 locker L-24 – Hub Sud",
+                                       tempi_consegna="6 settimane dall'ordine", garanzia="24 mesi on-site",
+                                       contatto=c1.contatti.first())
+        RigaPreventivo.objects.create(preventivo=p1, ordine=1, articolo=locker, quantita=2, sconto=5)
+        RigaPreventivo.objects.create(preventivo=p1, ordine=2, articolo=mano, quantita=16,
+                                      descrizione="Installazione, configurazione e collaudo")
+        RigaPreventivo.objects.create(preventivo=p1, ordine=3, descrizione="Trasporto e scarico", quantita=1,
+                                      prezzo_unitario=350)
+        with override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"):
+            p1.invia()
+
+        op = OrdineProduzione.objects.create(commessa=cm1, distinta=db, quantita=2, data_prevista=oggi,
+                                             note="Due locker aggiuntivi per Hub Nord")
+        op.conferma()  # impegna: le schede controller e i moduli RS485 non bastano -> "mancano"
+
+        rp = Riparazione.objects.create(cliente=c1, ticket=t1, apparato=apparati[1], articolo=comp["RS485"],
+                                        descrizione_pezzo="Modulo serrature RS485", matricola="RS-22-0417",
+                                        difetto_dichiarato="Canale 7 non comanda la serratura", tecnico=tec,
+                                        stato="diagnosi", diagnosi="Relè canale 7 bruciato, pista danneggiata.",
+                                        ore_lavoro=1.5, ddt_ingresso="DDT cliente 55")
+        RicambioRiparazione.objects.create(riparazione=rp, articolo=comp["SERR"], quantita=1)

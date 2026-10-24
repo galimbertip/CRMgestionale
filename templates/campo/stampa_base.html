@@ -19,6 +19,7 @@
     th { background: #f1f5f9; font-weight: 600; font-size: 9pt; }
     .kv td:first-child { width: 28%; color: #555; background: #fafbfc; }
     .box { border: 1px solid #cfd6df; padding: 8px; min-height: 40px; white-space: pre-wrap; }
+    .num { text-align: right; white-space: nowrap; } .tot td { border: 0; } .tot tr.big td { font-size: 12pt; font-weight: 700; border-top: 2px solid #0aa9c0; }
     .esito-ok { color: #15803d; font-weight: 700; } .esito-ko { color: #b91c1c; font-weight: 700; }
     .firme { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
     .firme div { border-top: 1px solid #555; padding-top: 4px; font-size: 9pt; min-height: 80px; }
@@ -30,19 +31,21 @@
   </style>
 </head>
 <body>
-  <div class="toolbar"><button onclick="window.print()">🖨 Stampa / Salva PDF</button> <a href="javascript:history.back()">Indietro</a></div>
+  <div class="toolbar"><button onclick="window.print()">🖨 Stampa / Salva PDF</button> {% block indietro %}<a href="javascript:history.back()">Indietro</a>{% endblock %}</div>
   <div class="page">
     <header>
       <img src="{% static 'img/gpverse-logo.jpg' %}" alt="GPverse">
-      <div class="doc"><b>{{ titolo }}</b>N. {{ obj.numero }} del {{ obj.data|date:"d/m/Y" }}</div>
+      <div class="doc"><b>{{ titolo }}</b>{% block intestazione %}N. {{ obj.numero }} del {{ obj.data|date:"d/m/Y" }}{% endblock %}</div>
     </header>
     {% block body %}{% endblock %}
+    {% block firme %}
     <div class="firme">
       <div>Il tecnico<br><b>{{ obj.tecnico|default:"" }}</b></div>
       <div>Per il cliente{% if obj.firmatario %}: <b>{{ obj.firmatario }}</b>{% endif %}
         {% if obj.firma %}<img src="{{ obj.firma.url }}" alt="firma">
         <span style="color:#777">Firmato il {{ obj.firmato_il|date:"d/m/Y H:i" }}</span>{% endif %}</div>
     </div>
+    {% endblock %}
     <footer>Documento generato da {{ GP_PRODUCT }} {{ GP_VERSION_LABEL }}</footer>
   </div>
 </body>

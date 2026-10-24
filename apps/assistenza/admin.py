@@ -249,6 +249,8 @@ class TicketAdmin(admin.ModelAdmin):
 class RicambioInline(admin.TabularInline):
     model = RigaRicambio
     extra = 1
+    autocomplete_fields = ("articolo",)
+    fields = ("articolo", "codice", "descrizione", "quantita", "matricola_installata", "matricola_rimossa")
 
 
 @admin.register(Rapportino)

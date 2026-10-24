@@ -44,6 +44,19 @@
   </table>
 </div>
 
+{% if preventivi %}
+<div class="card">
+  <h2>Preventivi</h2>
+  <table class="table small">
+    <thead><tr><th>Numero</th><th>Oggetto</th><th>Stato</th><th style="text-align:right">Totale</th></tr></thead>
+    <tbody>{% for p in preventivi %}<tr>
+      <td><a class="code" href="{{ p.get_absolute_url }}">{{ p.codice }}</a></td><td>{{ p.oggetto }}</td>
+      <td><span class="pill {% if p.stato == 'accettato' %}risolto{% elif p.stato == 'rifiutato' %}critica{% else %}nuovo{% endif %}">{% if p.scaduto %}Scaduto{% elif p.accettabile %}Da approvare{% else %}{{ p.get_stato_display }}{% endif %}</span></td>
+      <td style="text-align:right;white-space:nowrap">{{ p.totale|euro }}</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+{% endif %}
+
 {% if apparati %}
 <div class="card">
   <h2>I vostri apparati</h2>

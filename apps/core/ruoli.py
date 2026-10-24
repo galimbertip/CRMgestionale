@@ -1,8 +1,9 @@
 """Livelli di accesso del CRM e relativi permessi.
 
 - admin    → back-office completo, gestione utenti, SLA, contratti, modelli di checklist
-- tecnico  → lavoro operativo: ticket, rapportini, sopralluoghi, collaudi, parco installato;
-             contratti e SLA in sola lettura, nessuna cancellazione, nessuna gestione utenti
+- tecnico  → lavoro operativo: ticket, rapportini, sopralluoghi, collaudi, parco installato,
+             movimenti di magazzino, ordini di produzione, riparazioni, preventivi (bozze e invio);
+             contratti, SLA e distinte base in sola lettura, nessuna cancellazione, nessuna gestione utenti
 - cliente  → solo portale assistenza (mai il back-office)
 
 I gruppi Django corrispondenti vengono creati/aggiornati a ogni `migrate`, e ogni utente
@@ -13,7 +14,7 @@ from django.db import transaction
 GRUPPO_ADMIN = "Amministratori CRM"
 GRUPPO_TECNICO = "Tecnici"
 
-APP_CRM = ["core", "anagrafica", "commesse", "assistenza"]
+APP_CRM = ["core", "anagrafica", "commesse", "assistenza", "magazzino", "preventivi"]
 
 V, A, C, D = "view", "add", "change", "delete"
 
@@ -31,6 +32,13 @@ PERMESSI_TECNICO = {
         "apparato": [V, A, C],
         "contratto": [V], "livellosla": [V], "regolasla": [V],
     },
+    "magazzino": {
+        "articolo": [V, A, C], "movimento": [V, A],
+        "distintabase": [V], "rigadistinta": [V],
+        "ordineproduzione": [V, A, C], "impegno": [V],
+        "riparazione": [V, A, C], "ricambioriparazione": [V, A, C, D],
+    },
+    "preventivi": {"preventivo": [V, A, C], "rigapreventivo": [V, A, C, D]},
     # serve per scegliere tecnico/assegnatario nei campi a ricerca; la gestione resta agli admin
     "core": {"utente": [V]},
 }

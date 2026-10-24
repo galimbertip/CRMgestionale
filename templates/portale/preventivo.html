@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load gp %}
+{% block title %}Preventivo {{ p.codice }}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<p class="muted small"><span class="code">{{ p.codice }}</span> · {{ p.data|date:"j F Y" }} · {{ p.cliente }}</p>
+<h1>{{ p.oggetto }}</h1>
+<p style="display:flex;gap:6px;flex-wrap:wrap">
+  <span class="pill {% if p.stato == 'accettato' %}risolto{% elif p.stato == 'rifiutato' %}critica{% else %}nuovo{% endif %}">{% if p.scaduto %}Scaduto{% else %}{{ p.get_stato_display }}{% endif %}</span>
+  <span class="pill">{{ p.get_tipo_display }}</span>
+  <span class="pill">Valido fino al {{ p.scadenza|date:"d/m/Y" }}</span>
+</p>
+
+<div class="card" style="overflow-x:auto">
+  {% if p.introduzione %}<p style="white-space:pre-wrap;margin-top:0">{{ p.introduzione }}</p>{% endif %}
+  <table class="table">
+    <thead><tr><th>Descrizione</th><th style="text-align:right">Q.tà</th><th class="hide-sm" style="text-align:right">Prezzo</th><th style="text-align:right">Totale</th></tr></thead>
+    <tbody>
+    {% for r in p.righe.all %}
+      <tr><td>{{ r.descrizione }}{% if r.sconto %} <span class="muted small">(−{{ r.sconto|floatformat:"-2" }}%)</span>{% endif %}</td>
+          <td style="text-align:right">{{ r.quantita|floatformat:"-2" }} {{ r.unita }}</td>
+          <td class="hide-sm" style="text-align:right;white-space:nowrap">{{ r.prezzo_unitario|euro }}</td>
+          <td style="text-align:right;white-space:nowrap">{{ r.totale|euro }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div style="text-align:right;margin-top:12px;line-height:1.8">
+    {% if p.sconto_globale %}<div class="muted">Sconto {{ p.sconto_globale|floatformat:"-2" }}%: − {{ p.sconto_importo|euro }}</div>{% endif %}
+    <div class="muted">Imponibile {{ p.imponibile|euro }} · IVA {{ p.aliquota_iva|floatformat:"-2" }}% {{ p.iva|euro }}</div>
+    <div style="font-family:var(--display);font-size:1.6rem;color:var(--cyan)">Totale {{ p.totale|euro }}</div>
+  </div>
+</div>
+
+<div class="card small">
+  {% if p.pagamento %}<p style="margin:.2rem 0"><span class="muted">Pagamento:</span> {{ p.pagamento }}</p>{% endif %}
+  {% if p.tempi_consegna %}<p style="margin:.2rem 0"><span class="muted">Tempi:</span> {{ p.tempi_consegna }}</p>{% endif %}
+  {% if p.garanzia %}<p style="margin:.2rem 0"><span class="muted">Garanzia:</span> {{ p.garanzia }}</p>{% endif %}
+  {% if p.note %}<p style="white-space:pre-wrap;margin:.6rem 0 0">{{ p.note }}</p>{% endif %}
+  <p style="margin:.8rem 0 0"><a href="{% url 'portale:preventivo_stampa' p.token %}" target="_blank">🖨 Versione stampabile / PDF</a></p>
+</div>
+
+{% if p.accettabile %}
+<div class="grid cols-2" style="margin-top:16px">
+  <form method="post" class="card" style="border-color:rgba(45,212,167,.5)">
+    {% csrf_token %}<input type="hidden" name="azione" value="accetta">
+    <h2>Accetta il preventivo</h2>
+    <div class="field"><label for="nome">Nome e cognome</label><input id="nome" name="nome" required value="{{ nome_suggerito }}"></div>
+    <div class="field"><label for="rif">Vostro riferimento d'ordine <span class="muted small">(facoltativo)</span></label><input id="rif" name="riferimento"></div>
+    <div class="field check"><label><input type="checkbox" name="conferma" required> <span>Confermo di essere autorizzato ad accettare per {{ p.cliente }}</span></label></div>
+    <button class="btn">✔ Accetto</button>
+  </form>
+  <form method="post" class="card">
+    {% csrf_token %}<input type="hidden" name="azione" value="rifiuta">
+    <h2>Non procediamo</h2>
+    <div class="field"><label for="motivo">Motivo <span class="muted small">(facoltativo, ci aiuta)</span></label><textarea id="motivo" name="motivo" rows="4"></textarea></div>
+    <button class="btn ghost">Rifiuta</button>
+  </form>
+</div>
+{% elif p.stato == "accettato" %}
+<div class="card" style="border-color:rgba(45,212,167,.5)"><b>Accettato da {{ p.accettato_da }}</b> il {{ p.risposta_il|date:"j F Y, H:i" }}. Grazie, vi contatteremo per i prossimi passi.</div>
+{% elif p.scaduto %}
+<div class="card">Il preventivo è scaduto. <a href="{% url 'portale:apri_ticket' %}">Contattaci</a> per un aggiornamento.</div>
+{% elif p.stato == "rifiutato" %}
+<div class="card">Preventivo rifiutato il {{ p.risposta_il|date:"j F Y" }}.</div>
+{% endif %}
+{% endblock %}

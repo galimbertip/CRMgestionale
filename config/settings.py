@@ -28,6 +28,8 @@ INSTALLED_APPS = [
     "apps.anagrafica",
     "apps.commesse",
     "apps.assistenza",
+    "apps.magazzino",
+    "apps.preventivi",
     "apps.portale",
 ]
 

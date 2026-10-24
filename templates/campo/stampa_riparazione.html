@@ -1,0 +1,29 @@
+{% extends "campo/stampa_base.html" %}
+{% block intestazione %}N. {{ obj.numero }} · ricevuto il {{ obj.data_ricezione|date:"d/m/Y" }}{% endblock %}
+{% block body %}
+<table class="kv" style="margin-top:14px">
+  <tr><td>Cliente</td><td><b>{{ obj.cliente }}</b></td></tr>
+  <tr><td>Pezzo</td><td>{{ obj.descrizione_pezzo }}{% if obj.articolo %} (cod. {{ obj.articolo.codice }}){% endif %}</td></tr>
+  <tr><td>Matricola</td><td><b>{{ obj.matricola }}</b></td></tr>
+  {% if obj.apparato %}<tr><td>Proveniente da</td><td>{{ obj.apparato }}</td></tr>{% endif %}
+  {% if obj.ticket %}<tr><td>Ticket</td><td>{{ obj.ticket.codice }}</td></tr>{% endif %}
+  <tr><td>Garanzia</td><td>{{ obj.in_garanzia|yesno:"Sì,No" }}</td></tr>
+  {% if obj.ddt_ingresso %}<tr><td>DDT ingresso</td><td>{{ obj.ddt_ingresso }}</td></tr>{% endif %}
+  <tr><td>Stato</td><td>{{ obj.get_stato_display }}</td></tr>
+</table>
+<h2>Difetto dichiarato</h2><div class="box">{{ obj.difetto_dichiarato }}</div>
+{% if obj.diagnosi %}<h2>Diagnosi</h2><div class="box">{{ obj.diagnosi }}</div>{% endif %}
+{% if obj.lavoro_eseguito %}<h2>Lavoro eseguito</h2><div class="box">{{ obj.lavoro_eseguito }}</div>{% endif %}
+{% with ricambi=obj.ricambi.all %}{% if ricambi %}
+<h2>Ricambi sostituiti</h2>
+<table><tr><th>Codice</th><th>Descrizione</th><th class="num">Q.tà</th></tr>
+{% for r in ricambi %}<tr><td>{{ r.articolo.codice }}</td><td>{{ r.articolo.descrizione }}</td><td class="num">{{ r.quantita|floatformat:"-2" }}</td></tr>{% endfor %}
+</table>{% endif %}{% endwith %}
+{% if obj.data_riconsegna %}<p>Riconsegnato il {{ obj.data_riconsegna|date:"d/m/Y" }}{% if obj.ddt_uscita %} con DDT {{ obj.ddt_uscita }}{% endif %}.</p>{% endif %}
+{% endblock %}
+{% block firme %}
+<div class="firme">
+  <div>Ricevuto da<br><b>{{ obj.tecnico|default:"" }}</b></div>
+  <div>Per il cliente</div>
+</div>
+{% endblock %}

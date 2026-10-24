@@ -58,6 +58,21 @@ def dashboard(request):
                                          risolto_il__gt=F("scadenza_risoluzione"))),
         ),
     }
+    from apps.magazzino.models import Articolo, OrdineProduzione, Riparazione
+    from apps.preventivi.models import Preventivo
+
+    in_attesa = [p for p in Preventivo.objects.filter(stato="inviato").select_related("cliente") if not p.scaduto]
+    articoli = Articolo.objects.con_giacenze().exclude(tipo="servizio").filter(attivo=True)
+    ctx.update({
+        "preventivi_in_attesa": in_attesa,
+        "valore_in_attesa": sum((p.imponibile for p in in_attesa), 0),
+        "preventivi_bozza": Preventivo.objects.filter(stato="bozza").count(),
+        "riparazioni_aperte": Riparazione.objects.filter(stato__in=Riparazione.APERTE).count(),
+        "riparazioni_pronte": Riparazione.objects.filter(stato="riparato").count(),
+        "sotto_scorta": [a for a in articoli if a.scorta_minima and a.giacenza_nuovo - a.impegnato < a.scorta_minima],
+        "ordini_aperti": OrdineProduzione.objects.filter(stato__in=OrdineProduzione.STATI_IMPEGNANTI)
+        .select_related("distinta__prodotto", "commessa"),
+    })
     return render(request, "core/dashboard.html", ctx)
 
 

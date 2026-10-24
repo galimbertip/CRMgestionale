@@ -10,6 +10,8 @@
     <a class="btn small ghost" href="{% url 'admin:assistenza_rapportino_add' %}">+ Rapportino</a>
     <a class="btn small ghost" href="{% url 'admin:commesse_sopralluogo_add' %}">+ Sopralluogo</a>
     <a class="btn small ghost" href="{% url 'admin:commesse_collaudo_add' %}">+ Collaudo</a>
+    <a class="btn small ghost" href="{% url 'admin:preventivi_preventivo_add' %}">+ Preventivo</a>
+    <a class="btn small ghost" href="{% url 'admin:magazzino_riparazione_add' %}">+ Riparazione</a>
   </div>
 </div>
 
@@ -20,6 +22,9 @@
   <a class="card stat" href="{% url 'admin:assistenza_ticket_changelist' %}?cliente__isempty=1"><div class="n">{{ n_da_smistare }}</div><div class="l">Da smistare (cliente non riconosciuto)</div></a>
   <div class="card stat"><div class="n">{{ n_miei }}</div><div class="l">Assegnati a me</div></div>
   <a class="card stat" href="{% url 'admin:assistenza_apparato_changelist' %}?stato__exact=guasto"><div class="n">{{ apparati_guasti }}<span class="muted" style="font-size:1rem"> / {{ apparati_totali }}</span></div><div class="l">Apparati guasti / installati</div></a>
+  <a class="card stat" href="{% url 'admin:preventivi_preventivo_changelist' %}?stato__exact=inviato"><div class="n">{{ preventivi_in_attesa|length }}</div><div class="l">Preventivi in attesa · € {{ valore_in_attesa|floatformat:0 }}{% if preventivi_bozza %} · {{ preventivi_bozza }} in bozza{% endif %}</div></a>
+  <a class="card stat" href="{% url 'admin:magazzino_riparazione_changelist' %}"><div class="n">{{ riparazioni_aperte }}</div><div class="l">Riparazioni in corso{% if riparazioni_pronte %} · {{ riparazioni_pronte }} pronte da riconsegnare{% endif %}</div></a>
+  <a class="card stat {% if sotto_scorta %}warn{% endif %}" href="{% url 'admin:magazzino_articolo_changelist' %}?scorta=sotto"><div class="n">{{ sotto_scorta|length }}</div><div class="l">Articoli sotto scorta</div></a>
   <div class="card stat"><div class="n">{{ risolti_30gg.tot }}</div><div class="l">Risolti ultimi 30 gg{% if risolti_30gg.violati %} · {{ risolti_30gg.violati }} fuori SLA{% endif %}</div></div>
 </div>
 
@@ -58,6 +63,18 @@
     {% for r in commesse_per_stato %}
       <p style="margin:.3rem 0"><a href="{% url 'admin:commesse_commessa_changelist' %}?stato__exact={{ r.stato }}">{{ r.stato|capfirst }}</a>: <b>{{ r.n }}</b></p>
     {% empty %}<p class="muted">Nessuna commessa aperta.</p>{% endfor %}
+  </div>
+  <div class="card">
+    <h2>Produzione in corso</h2>
+    {% for o in ordini_aperti %}
+      <p style="margin:.3rem 0"><a href="{% url 'admin:magazzino_ordineproduzione_change' o.pk %}">{{ o.numero }}</a> · {{ o.quantita|floatformat:"-2" }} × {{ o.distinta.prodotto.codice }}{% if o.commessa %} · {{ o.commessa.codice }}{% endif %} · {{ o.get_stato_display }}</p>
+    {% empty %}<p class="muted">Nessun ordine di produzione aperto.</p>{% endfor %}
+  </div>
+  <div class="card">
+    <h2>Da riordinare</h2>
+    {% for a in sotto_scorta|slice:":8" %}
+      <p style="margin:.3rem 0"><a href="{% url 'admin:magazzino_articolo_change' a.pk %}">{{ a.codice }}</a> · {{ a.descrizione|truncatechars:40 }} · disp. <b style="color:var(--warn)">{{ a.giacenza_nuovo|floatformat:"-2" }}{% if a.impegnato %} − {{ a.impegnato|floatformat:"-2" }} imp.{% endif %}</b> / min {{ a.scorta_minima|floatformat:"-2" }}</p>
+    {% empty %}<p class="muted">Tutto sopra la scorta minima.</p>{% endfor %}
   </div>
   <div class="card">
     <h2>Ultimi sopralluoghi</h2>

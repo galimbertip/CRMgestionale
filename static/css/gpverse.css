@@ -184,3 +184,5 @@ a.card:hover { border-color: rgba(63,228,243,.5); }
   .brand span { display: none; }
   .top nav a, .top nav button { padding: .35rem .5rem; }
 }
+
+@media (max-width: 560px) { .hide-sm { display: none; } .table th, .table td { padding: .5rem .3rem; } }

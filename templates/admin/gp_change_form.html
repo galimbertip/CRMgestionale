@@ -1,0 +1,12 @@
+{% extends "admin/change_form.html" %}
+{% block submit_buttons_bottom %}
+{% if azioni_extra %}
+<div class="submit-row" style="background:rgba(10,169,192,.08);border-left:3px solid #0aa9c0">
+  <span style="align-self:center;font-weight:600;margin-right:8px">Azioni:</span>
+  {% for chiave, etichetta in azioni_extra %}
+    <input type="submit" name="_azione_{{ chiave }}" value="{{ etichetta }}" class="default" style="background:#0d1b2a">
+  {% endfor %}
+</div>
+{% endif %}
+{{ block.super }}
+{% endblock %}

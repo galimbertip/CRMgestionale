@@ -12,6 +12,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.commesse.models import Collaudo, Sopralluogo
+from apps.magazzino.models import Riparazione
+from apps.preventivi.models import Preventivo
 
 from .models import Rapportino
 
@@ -19,7 +21,10 @@ DOCUMENTI = {
     "rapportino": (Rapportino, "Rapportino d'intervento", "admin:assistenza_rapportino_change"),
     "sopralluogo": (Sopralluogo, "Verbale di sopralluogo", "admin:commesse_sopralluogo_change"),
     "collaudo": (Collaudo, "Verbale di collaudo", "admin:commesse_collaudo_change"),
+    "riparazione": (Riparazione, "Scheda di riparazione", "admin:magazzino_riparazione_change"),
+    "preventivo": (Preventivo, "Preventivo", "admin:preventivi_preventivo_change"),
 }
+FIRMABILI = {"rapportino", "sopralluogo", "collaudo"}
 
 
 def _documento(tipo, pk):
@@ -31,6 +36,8 @@ def _documento(tipo, pk):
 
 @staff_member_required
 def firma(request, tipo, pk):
+    if tipo not in FIRMABILI:
+        raise Http404
     obj, titolo, url_admin = _documento(tipo, pk)
     if request.method == "POST":
         nome = request.POST.get("firmatario", "").strip()

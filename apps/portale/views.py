@@ -125,9 +125,14 @@ def miei_ticket(request):
     if q:
         qs = qs.filter(Q(codice__icontains=q) | Q(oggetto__icontains=q) | Q(matricola_dichiarata__icontains=q))
     apparati = Apparato.objects.filter(cliente_id=u.cliente_id) if u.cliente_id else Apparato.objects.none()
+    from apps.preventivi.models import Preventivo
+
+    preventivi = (Preventivo.objects.filter(cliente_id=u.cliente_id, stato__in=["inviato", "accettato", "rifiutato"])
+                  if u.cliente_id and u.vede_ticket_azienda else Preventivo.objects.none())
     return render(request, "portale/miei_ticket.html", {
         "tickets": qs.select_related("apparato").order_by("-creato_il")[:200],
         "filtro": filtro, "q": q, "solo_miei": bool(request.GET.get("solo_miei")), "apparati": apparati,
+        "preventivi": preventivi[:50],
     })
 
 
@@ -154,3 +159,38 @@ def allegato(request, token, msg_id):
         raise Http404
     return FileResponse(msg.allegato.open("rb"), as_attachment=True,
                         filename=msg.allegato.name.rsplit("/", 1)[-1])
+
+
+def _preventivo_visibile(token):
+    from apps.preventivi.models import Preventivo
+
+    return get_object_or_404(Preventivo.objects.select_related("cliente", "contatto"), token=token,
+                             stato__in=["inviato", "accettato", "rifiutato", "scaduto"])
+
+
+def preventivo(request, token):
+    """Il cliente consulta il preventivo e lo accetta o rifiuta, tramite link segreto."""
+    p = _preventivo_visibile(token)
+    utente = request.user if request.user.is_authenticated else None
+    if request.method == "POST":
+        if not p.accettabile:
+            messages.info(request, "Questo preventivo non può più essere modificato.")
+        elif request.POST.get("azione") == "accetta":
+            nome = request.POST.get("nome", "").strip()
+            if not nome or not request.POST.get("conferma"):
+                messages.error(request, "Per accettare servono il nome e la conferma.")
+            else:
+                p.accetta(nome=nome[:120], riferimento=request.POST.get("riferimento", "").strip()[:80],
+                          utente=utente)
+                messages.success(request, "Preventivo accettato. Grazie!")
+        elif request.POST.get("azione") == "rifiuta":
+            p.rifiuta(request.POST.get("motivo", "").strip()[:2000])
+            messages.info(request, "Abbiamo registrato la vostra risposta.")
+        return redirect("portale:preventivo", token=token)
+    nome = (utente.get_full_name() if utente and utente.is_cliente else "") or (str(p.contatto) if p.contatto else "")
+    return render(request, "portale/preventivo.html", {"p": p, "nome_suggerito": nome})
+
+
+def preventivo_stampa(request, token):
+    p = _preventivo_visibile(token)
+    return render(request, "campo/stampa_preventivo.html", {"obj": p, "titolo": "Preventivo", "pubblico": True})

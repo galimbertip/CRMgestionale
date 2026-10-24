@@ -14,6 +14,8 @@ Versione corrente: vedi [`VERSION`](VERSION) · registro modifiche: [`CHANGELOG.
 | Prevendita | Commessa, **sopralluogo** con checklist da modello, foto, esito di fattibilità e opere preliminari |
 | Produzione | **Collaudo installazione** con checklist, apparati collaudati, esito/riserve, firma cliente |
 | Post-vendita | **Ticket** con SLA, **rapportino d'intervento** (ore, viaggio, km, ricambi, firma), contratti |
+| Preventivi | per nuova installazione, riparazione, intervento o contratto; righe da articoli, sconti, IVA, stampa; **accettazione online dal portale** (diventa commessa in produzione / riparazione approvata) |
+| Magazzino | area **nuovo** e area **riparazioni** (merce del cliente), movimenti, giacenze, scorte minime; **distinta base** e **ordini di produzione** che impegnano il materiale; **riparazioni a matricola**; ricambi dei rapportini scaricati in automatico |
 | Trasversale | Anagrafica clienti/sedi/contatti, **parco installato** per matricola, **contratti di assistenza** con livelli SLA, cruscotto tecnico |
 
 **Portale cliente** (`/assistenza/`)
@@ -35,7 +37,7 @@ col dito (*Raccogli firma cliente*) e stampa o salva il PDF dal browser.
 | Livello | Dove entra | Cosa può fare |
 |---|---|---|
 | **Admin** | cruscotto + back-office | tutto: utenti, contratti, livelli SLA, modelli di checklist, cancellazioni |
-| **Tecnico** | cruscotto + back-office | ticket, rapportini, sopralluoghi, collaudi, commesse, parco installato, anagrafica; contratti/SLA/checklist in sola lettura, nessuna cancellazione |
+| **Tecnico** | cruscotto + back-office | ticket, rapportini, sopralluoghi, collaudi, commesse, parco installato, anagrafica, movimenti di magazzino, produzione, riparazioni, preventivi; contratti/SLA/checklist/distinte base in sola lettura, nessuna cancellazione |
 | **Cliente** | solo portale | apre ticket, vede lo storico della sua azienda (o solo i suoi, se così impostato), risponde |
 
 Il livello si sceglie nella scheda utente (menu **Utenti**, visibile solo agli admin) e imposta da solo
@@ -95,7 +97,7 @@ Per rilasciare:
 
 ```bash
 python manage.py bump_version minor --nota "Aggiunto export Excel dei rapportini"
-git commit -am "V0.2.0" && git tag v0.2.0 && git push --follow-tags
+git commit -am "V0.4.0" && git tag v0.4.0 && git push --follow-tags
 ```
 
 Il comando aggiorna `VERSION` e apre la voce in `CHANGELOG.md`; un test verifica che i due siano allineati.
@@ -115,5 +117,7 @@ apps/core        utenti, numerazione documenti, versioning, cruscotto
 apps/anagrafica  clienti, sedi, contatti
 apps/commesse    commesse, sopralluoghi, collaudi, modelli checklist
 apps/assistenza  SLA, contratti, parco installato, ticket, rapportini, firma/stampa
-apps/portale     form pubblico, storico ticket, consultazione via link
+apps/magazzino   articoli, movimenti, distinta base, ordini di produzione, riparazioni
+apps/preventivi  preventivi, accettazione e effetti a valle
+apps/portale     form pubblico, storico ticket, preventivi, consultazione via link
 ```

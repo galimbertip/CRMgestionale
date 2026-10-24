@@ -7,6 +7,18 @@ Formato: versioni `V.maior.minor.patch` (Semantic Versioning).
 - **minor**: nuove funzioni compatibili
 - **patch**: correzioni
 
+## [0.3.0] - 2026-10-24
+
+### Aggiunto
+- Preventivi per nuova installazione, riparazione, intervento e contratto, con righe da articoli, sconti, IVA e stampa PDF.
+- Accettazione o rifiuto del preventivo dal portale cliente; l'accettazione porta la commessa in produzione (o la crea) e approva la riparazione.
+- Revisioni del preventivo con nuovo link al cliente.
+- Magazzino in sede con area nuovo e area riparazioni (merce del cliente), movimenti, giacenze e scorte minime.
+- Distinta base e ordini di produzione: la conferma impegna il materiale, il completamento scarica i componenti, carica il prodotto e crea gli apparati della commessa.
+- Riparazioni a matricola con stati, ricambi scaricati dal magazzino, scheda stampabile e preventivo di riparazione in un clic.
+- I ricambi del rapportino d'intervento scelti da articolo vengono scaricati dal magazzino.
+- Cruscotto con preventivi in attesa, riparazioni in corso, articoli da riordinare e produzione in corso.
+
 ## [0.2.0] - 2026-10-24
 
 ### Aggiunto

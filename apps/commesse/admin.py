@@ -2,6 +2,9 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 
+from apps.magazzino.models import OrdineProduzione
+from apps.preventivi.models import Preventivo
+
 from .models import (Collaudo, Commessa, FotoSopralluogo, ModelloChecklist, RigaCollaudo, RigaSopralluogo,
                      Sopralluogo, VoceModello)
 
@@ -42,6 +45,26 @@ class CollaudoInline(SopralluogoInline):
     model = Collaudo
 
 
+class PreventivoCommessaInline(admin.TabularInline):
+    model = Preventivo
+    fields = ("numero", "oggetto", "stato", "data")
+    readonly_fields = fields
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    verbose_name_plural = "preventivi"
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+class OrdineCommessaInline(PreventivoCommessaInline):
+    model = OrdineProduzione
+    fields = ("numero", "distinta", "quantita", "stato")
+    readonly_fields = fields
+    verbose_name_plural = "ordini di produzione"
+
+
 @admin.register(Commessa)
 class CommessaAdmin(admin.ModelAdmin):
     list_display = ("codice", "titolo", "cliente", "stato", "fasi_gestite", "ereditata", "data_apertura")
@@ -49,7 +72,7 @@ class CommessaAdmin(admin.ModelAdmin):
     search_fields = ("codice", "titolo", "cliente__ragione_sociale")
     autocomplete_fields = ("cliente", "responsabile")
     readonly_fields = ("codice",)
-    inlines = [SopralluogoInline, CollaudoInline]
+    inlines = [SopralluogoInline, PreventivoCommessaInline, OrdineCommessaInline, CollaudoInline]
     fieldsets = (
         (None, {"fields": ("codice", "cliente", "titolo", "descrizione", "stato", "responsabile", "valore")}),
         ("Fasi gestite", {"fields": ("fase_prevendita", "fase_produzione", "fase_postvendita"),

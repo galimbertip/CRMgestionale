@@ -1,0 +1,46 @@
+{% extends "campo/stampa_base.html" %}
+{% load gp %}
+{% block intestazione %}N. {{ obj.codice }} del {{ obj.data|date:"d/m/Y" }}<br>Valido fino al {{ obj.scadenza|date:"d/m/Y" }}{% endblock %}
+{% block indietro %}{% if pubblico %}<a href="{{ obj.get_absolute_url }}">Torna al preventivo</a>{% else %}<a href="javascript:history.back()">Indietro</a>{% endif %}{% endblock %}
+{% block body %}
+<table class="kv" style="margin-top:14px">
+  <tr><td>Spett.le</td><td><b>{{ obj.cliente.ragione_sociale }}</b>{% if obj.cliente.indirizzo %}<br>{{ obj.cliente.indirizzo }} {{ obj.cliente.citta }}{% endif %}{% if obj.cliente.partita_iva %}<br>P.IVA {{ obj.cliente.partita_iva }}{% endif %}</td></tr>
+  {% if obj.contatto %}<tr><td>Alla c.a.</td><td>{{ obj.contatto }}</td></tr>{% endif %}
+  <tr><td>Oggetto</td><td><b>{{ obj.oggetto }}</b> <span style="color:#555">({{ obj.get_tipo_display }})</span></td></tr>
+</table>
+{% if obj.introduzione %}<p style="white-space:pre-wrap">{{ obj.introduzione }}</p>{% endif %}
+
+<h2>Offerta</h2>
+<table>
+  <tr><th style="width:6%">#</th><th>Descrizione</th><th class="num">Q.tà</th><th>U.m.</th><th class="num">Prezzo un.</th><th class="num">Sconto</th><th class="num">Totale</th></tr>
+  {% for r in obj.righe.all %}
+  <tr><td>{{ forloop.counter }}</td><td>{{ r.descrizione }}{% if r.articolo %}<br><span style="color:#777;font-size:8.5pt">cod. {{ r.articolo.codice }}</span>{% endif %}</td>
+      <td class="num">{{ r.quantita|floatformat:"-2" }}</td><td>{{ r.unita }}</td>
+      <td class="num">{{ r.prezzo_unitario|euro }}</td><td class="num">{% if r.sconto %}{{ r.sconto|floatformat:"-2" }}%{% endif %}</td>
+      <td class="num">{{ r.totale|euro }}</td></tr>
+  {% endfor %}
+</table>
+<table class="tot" style="width:45%;margin-left:auto;margin-top:8px">
+  {% if obj.sconto_globale %}<tr><td>Totale righe</td><td class="num">{{ obj.imponibile_righe|euro }}</td></tr>
+  <tr><td>Sconto {{ obj.sconto_globale|floatformat:"-2" }}%</td><td class="num">− {{ obj.sconto_importo|euro }}</td></tr>{% endif %}
+  <tr><td>Imponibile</td><td class="num">{{ obj.imponibile|euro }}</td></tr>
+  <tr><td>IVA {{ obj.aliquota_iva|floatformat:"-2" }}%</td><td class="num">{{ obj.iva|euro }}</td></tr>
+  <tr class="big"><td>Totale</td><td class="num">{{ obj.totale|euro }}</td></tr>
+</table>
+
+<h2>Condizioni</h2>
+<table class="kv">
+  {% if obj.pagamento %}<tr><td>Pagamento</td><td>{{ obj.pagamento }}</td></tr>{% endif %}
+  {% if obj.tempi_consegna %}<tr><td>Tempi</td><td>{{ obj.tempi_consegna }}</td></tr>{% endif %}
+  {% if obj.garanzia %}<tr><td>Garanzia</td><td>{{ obj.garanzia }}</td></tr>{% endif %}
+  <tr><td>Validità</td><td>{{ obj.validita_giorni }} giorni, fino al {{ obj.scadenza|date:"d/m/Y" }}</td></tr>
+</table>
+{% if obj.note %}<div class="box" style="margin-top:8px">{{ obj.note }}</div>{% endif %}
+{% endblock %}
+{% block firme %}
+<div class="firme">
+  <div>Per GPverse<br><b>{{ obj.autore|default:"" }}</b></div>
+  <div>Per accettazione{% if obj.stato == "accettato" %}: <b>{{ obj.accettato_da }}</b><br>
+    <span style="color:#777">Accettato online il {{ obj.risposta_il|date:"d/m/Y H:i" }}{% if obj.riferimento_ordine %} · rif. {{ obj.riferimento_ordine }}{% endif %}</span>{% endif %}</div>
+</div>
+{% endblock %}

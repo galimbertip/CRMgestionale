@@ -410,15 +410,42 @@ class Rapportino(Timestamped):
 
 class RigaRicambio(models.Model):
     rapportino = models.ForeignKey(Rapportino, on_delete=models.CASCADE, related_name="ricambi")
+    articolo = models.ForeignKey("magazzino.Articolo", null=True, blank=True, on_delete=models.PROTECT,
+                                 related_name="+", help_text="Se indicato, il ricambio viene scaricato dal magazzino")
     codice = models.CharField(max_length=60, blank=True)
-    descrizione = models.CharField(max_length=200)
+    descrizione = models.CharField(max_length=200, blank=True)
     quantita = models.DecimalField("quantità", max_digits=8, decimal_places=2, default=1)
     matricola_installata = models.CharField(max_length=80, blank=True)
     matricola_rimossa = models.CharField(max_length=80, blank=True)
+    movimento = models.OneToOneField("magazzino.Movimento", null=True, blank=True, on_delete=models.SET_NULL,
+                                     related_name="+", editable=False)
 
     class Meta:
         verbose_name = "ricambio"
         verbose_name_plural = "ricambi utilizzati"
 
     def __str__(self):
-        return self.descrizione
+        return self.descrizione or (self.articolo.descrizione if self.articolo else "")
+
+    def save(self, *args, **kwargs):
+        from apps.magazzino.models import Movimento, movimenta
+
+        if self.articolo_id:
+            self.codice = self.codice or self.articolo.codice
+            self.descrizione = self.descrizione or self.articolo.descrizione
+        super().save(*args, **kwargs)
+        if self.articolo_id and not self.movimento_id:
+            r = self.rapportino
+            self.movimento = movimenta(self.articolo, Movimento.Causale.SCARICO_INTERVENTO, self.quantita,
+                                       rapportino=r, cliente=r.cliente, matricola=self.matricola_installata,
+                                       note=r.numero)
+            if self.movimento:
+                super().save(update_fields=["movimento"])
+        elif self.movimento_id and self.movimento.quantita != -abs(self.quantita):
+            self.movimento.quantita = self.quantita
+            self.movimento.save()
+
+    def delete(self, *args, **kwargs):
+        if self.movimento_id:
+            self.movimento.delete()
+        return super().delete(*args, **kwargs)
